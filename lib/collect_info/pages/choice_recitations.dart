@@ -1,8 +1,8 @@
-// import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
-import 'package:just_audio/just_audio.dart';
 
 import '../../api/all_recitation.dart';
 import '../getx/get_controller.dart';
@@ -17,24 +17,17 @@ class RecitaionChoice extends StatefulWidget {
 
 class _RecitaionChoiceState extends State<RecitaionChoice> {
   final infoController = Get.put(InfoController());
+  AudioPlayer player = AudioPlayer();
 
   late List<String> allRecitationSearch = [];
   bool isPlaying = false;
+  bool isPaused = false;
+  int playingAyahIndex = 0;
+  int maxPlayingIndex = 6;
 
   @override
   void initState() {
     allRecitationSearch.addAll(allRecitation);
-    player.playerStateStream.listen((event) {
-      if (event.processingState == ProcessingState.completed &&
-          player.currentIndex! >= 6) {
-        setState(() {
-          playingIndex = -1;
-        });
-      }
-      setState(() {
-        isPlaying = event.playing;
-      });
-    });
     if (widget.previousInfo != null) {
       Map<String, String> temInfo = widget.previousInfo!;
       int index = allRecitationSearch.indexOf(temInfo['recitation_ID'] ?? "");
@@ -43,6 +36,19 @@ class _RecitaionChoiceState extends State<RecitaionChoice> {
         infoController.recitationName.value = allRecitationSearch[index];
       }
     }
+    player.onPlayerComplete.listen((event) {
+      setState(() {
+        playingAyahIndex++;
+      });
+      if (playingAyahIndex <= maxPlayingIndex) {
+        player.play(UrlSource(listUrl[playingAyahIndex]));
+      } else {
+        setState(() {
+          playingIndex = -1;
+          playingAyahIndex = 0;
+        });
+      }
+    });
     setValue();
     super.initState();
   }
@@ -70,40 +76,58 @@ class _RecitaionChoiceState extends State<RecitaionChoice> {
   List<String> listUrl = [];
 
   void playResource(String url, int ayahCount) async {
-    listUrl = [];
-    setState(() {
-      listUrl;
-    });
-    for (int i = 1; i <= 7; i++) {
-      listUrl.add("$url/00100$i.mp3");
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (!(connectivityResult.contains(ConnectivityResult.ethernet) ||
+        connectivityResult.contains(ConnectivityResult.wifi) ||
+        connectivityResult.contains(ConnectivityResult.mobile))) {
+      showDialog(
+        // ignore: use_build_context_synchronously
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("No Internet Connection"),
+          content: const Text(
+              "We need to download audio data from server.\nMake sure you are connected with internet."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        playingAyahIndex = 0;
+      });
+      listUrl = [];
+      setState(() {
+        listUrl;
+      });
+      for (int i = 1; i <= 7; i++) {
+        listUrl.add("$url/00100$i.mp3");
+      }
+      setState(() {
+        listUrl;
+      });
+      player.play(UrlSource(listUrl[playingAyahIndex]));
     }
-    setState(() {
-      listUrl;
-    });
-
-    List<AudioSource> audioResourceSource = [];
-    for (int i = 0; i < 7; i++) {
-      audioResourceSource.add(AudioSource.uri(Uri.parse(listUrl[i])));
-    }
-    final playlist = ConcatenatingAudioSource(
-      shuffleOrder: DefaultShuffleOrder(),
-      children: audioResourceSource,
-    );
-    await player.setAudioSource(playlist,
-        initialIndex: 0, initialPosition: Duration.zero);
-    await Future.delayed(const Duration(milliseconds: 100));
-    await player.play();
   }
 
   void resumeOrPuseAudio(bool isPlay) {
     if (isPlay) {
-      player.play();
+      player.resume();
+      setState(() {
+        isPaused = false;
+      });
     } else {
       player.pause();
+      setState(() {
+        isPaused = true;
+      });
     }
   }
-
-  AudioPlayer player = AudioPlayer();
 
   String getBaseURLOfAudio(int value) {
     String recitor = allRecitationSearch[value];

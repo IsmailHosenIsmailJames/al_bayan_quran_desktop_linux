@@ -79,7 +79,23 @@ class _CollectInfoDesktopState extends State<CollectInfoDesktop> {
                     }
                   }
                 }
-              : null,
+              : () {
+                  showDialog(
+                    // ignore: use_build_context_synchronously
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Please fill all information properly"),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text("OK"),
+                        ),
+                      ],
+                    ),
+                  );
+                },
           label: const Center(
             child: Row(
               children: [

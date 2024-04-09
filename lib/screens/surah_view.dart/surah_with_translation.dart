@@ -5,21 +5,19 @@ import 'package:al_bayan_quran/core/show_twoested_message.dart';
 import 'package:al_bayan_quran/screens/getx_controller.dart';
 import 'package:al_bayan_quran/screens/surah_view.dart/tafseer/tafseer.dart';
 import 'package:archive/archive.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
-import 'package:just_audio/just_audio.dart';
 
 import '../../api/colors_tazweed.dart';
 import '../../theme/theme_controller.dart';
 import '../settings/settings.dart';
 import 'notes/notes.dart';
-
-AudioPlayer player = AudioPlayer();
 
 class SuraView extends StatefulWidget {
   final int surahNumber;
@@ -40,6 +38,7 @@ class SuraView extends StatefulWidget {
 }
 
 class _SuraViewState extends State<SuraView> {
+  AudioPlayer player = AudioPlayer();
   late int totalAyahInSuarh;
   late String? surahNameSimple;
   late String? surahNameArabic;
@@ -74,63 +73,94 @@ class _SuraViewState extends State<SuraView> {
       favoriteSurahKey = favo;
     }
 
-    player.currentIndexStream.listen((event) {
-      if (player.playing && event != null) {
+    // player.currentIndexStream.listen((event) {
+    //   if (player.playing && event != null) {
+    //     setState(() {
+    //       playingIndex = event;
+    //     });
+    //     if (listOfkey[playingIndex].currentContext != null &&
+    //         player.playing &&
+    //         playingIndex > -1) {
+    //       Scrollable.ensureVisible(
+    //         listOfkey[playingIndex].currentContext!,
+    //         duration: const Duration(milliseconds: 500),
+    //         alignment: 0.5,
+    //         curve: Curves.ease,
+    //       );
+    //     }
+    //   }
+    //   if (event != null) {
+    //     setState(() {
+    //       playingIndex = event;
+    //     });
+    //   }
+    // });
+
+    // player.playerStateStream.listen((event) {
+    //   if (event.processingState == ProcessingState.completed &&
+    //       playingIndex >= end - 1) {
+    //     setState(() {
+    //       showFloatingControllers = false;
+    //       isLoading = false;
+    //       isPlaying = false;
+    //     });
+    //   } else if (event.processingState == ProcessingState.completed) {
+    //     setState(() {
+    //       isPlaying = false;
+    //       showFloatingControllers = false;
+    //       playingIndex = -1;
+    //     });
+    //   } else if (event.processingState == ProcessingState.loading) {
+    //     setState(() {
+    //       isLoading = true;
+    //       showFloatingControllers = true;
+    //     });
+    //   } else if (event.playing) {
+    //     setState(() {
+    //       isPlaying = true;
+    //       isLoading = false;
+    //       showFloatingControllers = true;
+    //     });
+    //   } else if (event.playing == false) {
+    //     setState(() {
+    //       isPlaying = false;
+    //       isLoading = false;
+    //     });
+    //   }
+    // });
+
+    player.onPlayerComplete.listen((event) async {
+      if (currentPlayingAyah < maxAyahToPlay) {
         setState(() {
-          playingIndex = event;
+          currentPlayingAyah++;
+          playingIndex = currentPlayingAyah;
+          isPlaying = true;
         });
-        if (listOfkey[playingIndex].currentContext != null &&
-            player.playing &&
-            playingIndex > -1) {
-          Scrollable.ensureVisible(
-            listOfkey[playingIndex].currentContext!,
-            duration: const Duration(milliseconds: 500),
+        player.play(audioResourceSource[currentPlayingAyah]);
+        if (listOfkey[currentPlayingAyah].currentContext != null) {
+          await Scrollable.ensureVisible(
+            listOfkey[currentPlayingAyah].currentContext!,
             alignment: 0.5,
-            curve: Curves.ease,
+            duration: const Duration(milliseconds: 600),
           );
         }
-      }
-      if (event != null) {
+      } else {
         setState(() {
-          playingIndex = event;
+          playingIndex = -1;
+          isPlaying = false;
+          showFloatingControllers = false;
         });
       }
     });
 
-    player.playerStateStream.listen((event) {
-      if (event.processingState == ProcessingState.completed &&
-          playingIndex >= end - 1) {
-        setState(() {
-          showFloatingControllers = false;
-          isLoading = false;
-          isPlaying = false;
-        });
-      } else if (event.processingState == ProcessingState.completed) {
-        setState(() {
-          isPlaying = false;
-          showFloatingControllers = false;
-          playingIndex = -1;
-        });
-      } else if (event.processingState == ProcessingState.loading) {
-        setState(() {
-          isLoading = true;
-          showFloatingControllers = true;
-        });
-      } else if (event.playing) {
-        setState(() {
-          isPlaying = true;
-          isLoading = false;
-          showFloatingControllers = true;
-        });
-      } else if (event.playing == false) {
-        setState(() {
-          isPlaying = false;
-          isLoading = false;
-        });
-      }
-    });
     if (widget.scrollToAyah != null) scrollToAyahInit(widget.scrollToAyah!);
     super.initState();
+  }
+
+  @override
+  void dispose() async {
+    await player.dispose();
+    super.dispose();
   }
 
   void scrollToAyahInit(int ayah) async {
@@ -141,6 +171,7 @@ class _SuraViewState extends State<SuraView> {
         await Scrollable.ensureVisible(
           listOfkey[i].currentContext!,
           alignment: 0.5,
+          duration: const Duration(milliseconds: 300),
         );
       }
     }
@@ -153,53 +184,23 @@ class _SuraViewState extends State<SuraView> {
   bool showFloatingControllers = false;
   bool expandFloatingControllers = true;
   bool playFromStart = true;
+  List<Source> audioResourceSource = [];
+  int currentPlayingAyah = 0;
+  int maxAyahToPlay = 0;
 
-  void playAudioList(List<String> listOfAudioURL, int index,
-      [bool dontPlayNow = false]) async {
-    try {
-      setState(() {
-        playFromStart = false;
-      });
-      List<AudioSource> audioResourceSource = [];
-      for (int i = 0; i < listOfAudioURL.length; i++) {
-        audioResourceSource.add(
-          AudioSource.uri(
-            Uri.parse(listOfAudioURL[i]),
-          ),
-        );
-      }
-      final playlist = ConcatenatingAudioSource(
-        shuffleOrder: DefaultShuffleOrder(),
-        children: audioResourceSource,
-      );
-
-      await player.setAudioSource(playlist,
-          initialIndex: index, initialPosition: Duration.zero);
-      if (!dontPlayNow) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        await player.play();
-      } else {
-        setState(() {
-          isLoading = false;
-          isPlaying = false;
-          showFloatingControllers = false;
-          playingIndex = -1;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        isPlaying = false;
-        showFloatingControllers = false;
-        playingIndex = -1;
-      });
+  void playAudioList(
+    List<String> listOfAudioURL,
+    int index,
+  ) async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (!(connectivityResult.contains(ConnectivityResult.ethernet) ||
+        connectivityResult.contains(ConnectivityResult.wifi) ||
+        connectivityResult.contains(ConnectivityResult.mobile))) {
       showDialog(
         // ignore: use_build_context_synchronously
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Need Internet Connection"),
-          content: const Text(
-              "Note: When you play any ayah for the first time it will get downloaded from internet. Then it will stored as cached data in your local memory. You need internet connection now for play this audio."),
           actions: [
             TextButton(
                 onPressed: () {
@@ -209,6 +210,43 @@ class _SuraViewState extends State<SuraView> {
           ],
         ),
       );
+    } else {
+      try {
+        setState(() {
+          playFromStart = false;
+          audioResourceSource = [];
+          currentPlayingAyah = index;
+          isPlaying = true;
+          maxAyahToPlay = listOfAudioURL.length - 1;
+        });
+        for (int i = 0; i < listOfAudioURL.length; i++) {
+          audioResourceSource.add(UrlSource(listOfAudioURL[i]));
+        }
+        await player.play(audioResourceSource[currentPlayingAyah]);
+      } catch (e) {
+        setState(() {
+          isLoading = false;
+          isPlaying = false;
+          showFloatingControllers = false;
+          playingIndex = -1;
+        });
+        showDialog(
+          // ignore: use_build_context_synchronously
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Need Internet Connection"),
+            content: const Text(
+                "Note: When you play any ayah for the first time it will get downloaded from internet. Then it will stored as cached data in your local memory. You need internet connection now for play this audio."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("OK"))
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -406,7 +444,14 @@ class _SuraViewState extends State<SuraView> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            player.seekToPrevious();
+                            if (currentPlayingAyah > 0) {
+                              setState(() {
+                                currentPlayingAyah--;
+                                playingIndex = currentPlayingAyah;
+                              });
+                              player.play(
+                                  audioResourceSource[currentPlayingAyah]);
+                            }
                           },
                           icon: const Icon(
                             Icons.skip_previous,
@@ -418,10 +463,16 @@ class _SuraViewState extends State<SuraView> {
                         IconButton(
                           color: Colors.white,
                           onPressed: () {
-                            if (player.playing) {
+                            if (player.state == PlayerState.playing) {
                               player.pause();
+                              setState(() {
+                                isPlaying = false;
+                              });
                             } else {
-                              player.play();
+                              player.resume();
+                              setState(() {
+                                isPlaying = true;
+                              });
                             }
                           },
                           style: const ButtonStyle(
@@ -438,7 +489,15 @@ class _SuraViewState extends State<SuraView> {
                         ),
                         IconButton(
                           onPressed: () {
-                            player.seekToNext();
+                            if (currentPlayingAyah < maxAyahToPlay) {
+                              setState(() {
+                                currentPlayingAyah++;
+                                isPlaying = true;
+                                playingIndex = currentPlayingAyah;
+                              });
+                              player.play(
+                                  audioResourceSource[currentPlayingAyah]);
+                            }
                           },
                           icon: const Icon(
                             Icons.skip_next,
@@ -449,12 +508,12 @@ class _SuraViewState extends State<SuraView> {
                         ),
                         IconButton(
                           onPressed: () async {
-                            if (!player.playing) {
+                            if (!(player.state == PlayerState.playing)) {
                               setState(() {
                                 showFloatingControllers = false;
                               });
                               List<String> listOfAudioURL = getAllAudioUrl();
-                              playAudioList(listOfAudioURL, 0, true);
+                              playAudioList(listOfAudioURL, 0);
                             } else {
                               setState(() {
                                 expandFloatingControllers = false;
@@ -494,6 +553,7 @@ class _SuraViewState extends State<SuraView> {
                 onPressed: () async {
                   setState(() {
                     playFromStart = true;
+                    isPlaying = false;
                   });
                   await player.pause();
                   // ignore: use_build_context_synchronously
@@ -649,8 +709,7 @@ class _SuraViewState extends State<SuraView> {
                           ),
                           color: Colors.white,
                           onPressed: () {
-                            if (player.playerState.processingState ==
-                                ProcessingState.completed) {
+                            if (player.state == PlayerState.completed) {
                               setState(() {
                                 showFloatingControllers = true;
                                 playingIndex = 0;
@@ -660,9 +719,9 @@ class _SuraViewState extends State<SuraView> {
                               playAudioList(listOfAudioURL, 0);
                             }
 
-                            if (!player.playing && playingIndex == -1 ||
+                            if (!(player.state == PlayerState.playing) &&
+                                    playingIndex == -1 ||
                                 playFromStart) {
-                              print("object  0985049  349539 2345235");
                               setState(() {
                                 showFloatingControllers = true;
                                 playingIndex = 0;
@@ -670,9 +729,15 @@ class _SuraViewState extends State<SuraView> {
                               });
                               List<String> listOfAudioURL = getAllAudioUrl();
                               playAudioList(listOfAudioURL, 0);
-                            } else if (!player.playing) {
-                              player.play();
+                            } else if (!(player.state == PlayerState.playing)) {
+                              setState(() {
+                                isPlaying = true;
+                              });
+                              player.resume();
                             } else {
+                              setState(() {
+                                isPlaying = false;
+                              });
                               player.pause();
                             }
                           },
@@ -960,10 +1025,16 @@ class _SuraViewState extends State<SuraView> {
                             });
                             playAudioList(getAllAudioUrl(), index - 1);
                           } else if (playingIndex + 1 == index &&
-                              player.playing) {
+                              player.state == PlayerState.playing) {
+                            setState(() {
+                              isPlaying = false;
+                            });
                             player.pause();
                           } else if (playingIndex + 1 == index) {
-                            player.play();
+                            setState(() {
+                              isPlaying = true;
+                            });
+                            player.resume();
                           } else {
                             setState(() {
                               showFloatingControllers = true;

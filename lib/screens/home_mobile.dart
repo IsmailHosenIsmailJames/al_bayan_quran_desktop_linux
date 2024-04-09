@@ -4,6 +4,8 @@ import 'package:al_bayan_quran/screens/favorite_bookmark_notes/book_mark.dart';
 import 'package:al_bayan_quran/screens/favorite_bookmark_notes/favorite.dart';
 import 'package:al_bayan_quran/screens/favorite_bookmark_notes/notes_v.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -28,16 +30,20 @@ class HomeMobile extends StatefulWidget {
   State<HomeMobile> createState() => _HomeMobileState();
 }
 
-int currentIndex = 0;
-
 class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
   final SidebarXController _sidebarXController =
       SidebarXController(selectedIndex: 0);
-
-  GlobalKey<ScaffoldState> drawerController = GlobalKey<ScaffoldState>();
+  int currentIndex = 0;
   bool isPlaying = false;
+  AudioPlayer player = AudioPlayer();
   String currentReciter = "";
   int playingIndex = -1;
+  int surahNumber = -1;
+  int currentPlayingAyahIndex = 0;
+  int maxPlayingAyahIndex = 0;
+
+  GlobalKey<ScaffoldState> drawerController = GlobalKey<ScaffoldState>();
+
   List<DropdownMenuEntry<Object>> dropdownList = [];
 
   List<int> expandedPosition = [];
@@ -60,6 +66,15 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
     final info = infoBox.get("info", defaultValue: false);
 
     currentReciter = info['recitation_ID'];
+
+    player.onPlayerComplete.listen((event) {
+      if (currentPlayingAyahIndex < maxPlayingAyahIndex) {
+        setState(() {
+          currentPlayingAyahIndex++;
+        });
+        player.play(audioResource[currentPlayingAyahIndex]);
+      }
+    });
 
     super.initState();
     for (int i = 0; i < 30; i++) {
@@ -90,6 +105,268 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
       await Hive.openBox(
           tem.get("quranScriptType", defaultValue: "quran_tajweed"));
     }
+  }
+
+  List<Source> audioResource = [];
+
+  void playAudio(int index, {bool start = false, bool wait = false}) async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (!(connectivityResult.contains(ConnectivityResult.ethernet) ||
+        connectivityResult.contains(ConnectivityResult.wifi) ||
+        connectivityResult.contains(ConnectivityResult.mobile))) {
+      showDialog(
+        // ignore: use_build_context_synchronously
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("No Internet Connection"),
+          content: const Text(
+              "We need to download audio data from server.\nMake sure you are connected with internet."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        audioResource = [];
+      });
+      setState(() {
+        surahNumber = index;
+      });
+
+      List<String> listOfURL = getAllAudioUrl();
+      setState(() {
+        maxPlayingAyahIndex = listOfURL.length;
+        currentPlayingAyahIndex = 0;
+      });
+
+      if (playingIndex != index || start) {
+        if (wait) {
+          await Future.delayed(const Duration(seconds: 1));
+        }
+        try {
+          for (int i = 0; i < listOfURL.length; i++) {
+            audioResource.add(UrlSource(listOfURL[i]));
+          }
+          setState(() {
+            audioResource;
+          });
+          player.play(audioResource[0]);
+
+          setState(() {
+            playingIndex = index;
+            isPlaying = true;
+          });
+        } catch (e) {
+          showDialog(
+            // ignore: use_build_context_synchronously
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(
+                "An error occoured",
+              ),
+              content: const Text(
+                  "Need stable internet connection for play audio for the first time."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else if (index == playingIndex && player.state != PlayerState.playing) {
+        player.resume();
+        setState(() {
+          playingIndex = index;
+          isPlaying = true;
+        });
+      } else {
+        player.pause();
+      }
+    }
+  }
+
+  List<Widget> listSurahProviderForAudio(length) {
+    List<Widget> listSurah = [];
+
+    for (int index = 0; index < length; index++) {
+      String revelationPlace = allChaptersInfo[index]['revelation_place'];
+      String nameSimple = allChaptersInfo[index]['name_simple'];
+      String nameArabic = allChaptersInfo[index]['name_arabic'];
+      int versesCount = allChaptersInfo[index]['verses_count'];
+      listSurah.add(
+        GestureDetector(
+          onTap: () {
+            if (playingIndex == index) {
+              if (player.state == PlayerState.playing) {
+                player.pause();
+                setState(() {
+                  isPlaying = false;
+                });
+              } else {
+                player.resume();
+                setState(() {
+                  isPlaying = true;
+                });
+              }
+            } else {
+              playAudio(index, start: true);
+              setState(() {
+                playingIndex = index;
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
+            decoration: BoxDecoration(
+                color: const Color.fromARGB(20, 125, 125, 125),
+                borderRadius: BorderRadius.circular(15)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color.fromARGB(195, 0, 133, 4),
+                      child: Center(
+                        child: Text(
+                          (index + 1).toString(),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: playingIndex == index && isPlaying
+                          ? const Icon(
+                              Icons.pause_rounded,
+                              size: 30,
+                              color: Color.fromARGB(195, 0, 133, 4),
+                            )
+                          : const Icon(
+                              Icons.play_arrow_rounded,
+                              size: 30,
+                              color: Color.fromARGB(195, 0, 133, 4),
+                            ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 15),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            nameSimple,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            revelationPlace,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 136, 136, 136),
+                            ),
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      nameArabic,
+                      style: const TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      "$versesCount Ayahs",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 136, 136, 136),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return listSurah;
+  }
+
+  List<String> getAllAudioUrl() {
+    int start = 0;
+    int end = allChaptersInfo[surahNumber]['verses_count'];
+    List<String> listOfURL = [];
+    for (int i = start; i < end; i++) {
+      listOfURL.add(getFullURL(i + 1));
+    }
+    return listOfURL;
+  }
+
+  String getBaseURLOfAudio(String recitor) {
+    List<String> splited = recitor.split("(");
+    String urlID = splited[1].replaceAll(")", "");
+    String audioBaseURL = "https://everyayah.com/data/$urlID";
+    return audioBaseURL;
+  }
+
+  String getIdOfAudio(int ayahNumber) {
+    String suraString = "";
+    if (surahNumber < 10) {
+      suraString = "00${surahNumber + 1}";
+    } else if (surahNumber + 1 < 100) {
+      suraString = "0${surahNumber + 1}";
+    } else {
+      suraString = (surahNumber + 1).toString();
+    }
+    String ayahString = "";
+
+    if (ayahNumber < 10) {
+      ayahString = "00$ayahNumber";
+    } else if (ayahNumber < 100) {
+      ayahString = "0$ayahNumber";
+    } else {
+      ayahString = ayahNumber.toString();
+    }
+    return suraString + ayahString;
+  }
+
+  int getAyahCountFromStart(int ayahNumber) {
+    for (int i = 0; i < surahNumber; i++) {
+      int verseCount = allChaptersInfo[i]['verses_count'];
+      ayahNumber += verseCount;
+    }
+    return ayahNumber;
+  }
+
+  String getFullURL(int ayahNumber) {
+    String recitorChoice =
+        infoBox.get("info")['recitation_ID'] ?? currentReciter;
+    String baseURL = getBaseURLOfAudio(recitorChoice);
+    String audioID = getIdOfAudio(ayahNumber);
+    return "$baseURL/$audioID.mp3";
   }
 
   List<Widget> listSurahProviderDesktop(length) {
@@ -586,6 +863,37 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    Widget dropdown = Padding(
+      padding: const EdgeInsets.only(
+        left: 10,
+        right: 10,
+        bottom: 5,
+        top: 5,
+      ),
+      child: DropdownMenu(
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        menuHeight: 300,
+        label: const Text("All Reciters List"),
+        onSelected: (value) {
+          Map<String, String> temInfoMap =
+              Map<String, String>.from(infoBox.get("info"));
+          temInfoMap['recitation_ID'] = value.toString();
+          infoBox.put("info", temInfoMap);
+          setState(() {
+            currentReciter = value.toString();
+          });
+          if (playingIndex != -1) {
+            playAudio(playingIndex, start: true);
+          }
+        },
+        dropdownMenuEntries: dropdownList,
+      ),
+    );
+
     Widget myDrawer = Drawer(
       child: ListView(
         padding: const EdgeInsets.only(
@@ -873,6 +1181,16 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
                   ),
                   title: const Text(
                     "Quran",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                SalomonBottomBarItem(
+                  icon: const Padding(
+                    padding: EdgeInsets.only(left: 20, right: 20),
+                    child: Icon(Icons.audiotrack_outlined),
+                  ),
+                  title: const Text(
+                    "Audio",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -1171,6 +1489,151 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
             ),
           ),
         ),
+        Scaffold(
+          drawer: MediaQuery.of(context).size.width > 800 ? null : myDrawer,
+          appBar: MediaQuery.of(context).size.width > 800
+              ? null
+              : AppBar(
+                  title: const Text(
+                    "Audio",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (MediaQuery.of(context).size.width <= 720) dropdown,
+              if (MediaQuery.of(context).size.width <= 720)
+                Expanded(
+                  child: ListView(children: listSurahProviderForAudio(114)),
+                ),
+              if (MediaQuery.of(context).size.width > 720)
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (MediaQuery.of(context).size.width > 800)
+                        SideBar(sidebarXController: _sidebarXController),
+                      Expanded(
+                        child: dropdown,
+                      ),
+                      Expanded(
+                        child: ListView(
+                          children: listSurahProviderForAudio(114),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Text(currentReciter.split("(")[0]),
+              Container(
+                margin: const EdgeInsets.only(left: 10, right: 10),
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(30, 125, 125, 125),
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(50),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: "Jump to Previous Surah",
+                      onPressed: playingIndex < 0
+                          ? null
+                          : () {
+                              playAudio(playingIndex - 1);
+                            },
+                      icon: const Icon(
+                        Icons.navigate_before_rounded,
+                        size: 40,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: "Jump to Previous Ayah",
+                      onPressed: () {
+                        if (currentPlayingAyahIndex > 0) {
+                          player
+                              .play(audioResource[currentPlayingAyahIndex - 1]);
+                          setState(() {
+                            currentPlayingAyahIndex--;
+                          });
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.skip_previous_rounded,
+                        size: 40,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: "Play Or Pause",
+                      onPressed: () async {
+                        if (playingIndex != -1) {
+                          if (player.state == PlayerState.playing) {
+                            player.pause();
+                            setState(() {
+                              isPlaying = false;
+                            });
+                          } else {
+                            player.resume();
+                            setState(() {
+                              isPlaying = true;
+                            });
+                          }
+                        } else {
+                          playAudio(0, start: true);
+                        }
+                      },
+                      icon: isPlaying
+                          ? const Icon(
+                              Icons.pause_rounded,
+                              size: 55,
+                            )
+                          : const Icon(
+                              Icons.play_arrow_rounded,
+                              size: 55,
+                            ),
+                    ),
+                    IconButton(
+                      tooltip: "Jump to Next Ayah",
+                      onPressed: () {
+                        if (currentPlayingAyahIndex < maxPlayingAyahIndex) {
+                          player
+                              .play(audioResource[currentPlayingAyahIndex + 1]);
+                          setState(() {
+                            currentPlayingAyahIndex++;
+                          });
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.skip_next_rounded,
+                        size: 40,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: "Jump to Next Surah",
+                      onPressed: playingIndex >= 113
+                          ? null
+                          : () async {
+                              playAudio(playingIndex + 1);
+                            },
+                      icon: const Icon(
+                        Icons.navigate_next_rounded,
+                        size: 40,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         const Profile(),
       ].elementAt(currentIndex),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndDocked,
@@ -1186,6 +1649,10 @@ class _HomeMobileState extends State<HomeMobile> with TickerProviderStateMixin {
                   SalomonBottomBarItem(
                     icon: const Icon(FontAwesomeIcons.book),
                     title: const Text("Quran"),
+                  ),
+                  SalomonBottomBarItem(
+                    icon: const Icon(Icons.audiotrack_outlined),
+                    title: const Text("Audio"),
                   ),
                   SalomonBottomBarItem(
                     icon: const Icon(Icons.person),

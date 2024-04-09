@@ -6,7 +6,6 @@ import 'package:al_bayan_quran/screens/favorite_bookmark_notes/notes_get_data.da
 import 'package:al_bayan_quran/screens/home_mobile.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:sidebarx/sidebarx.dart';
