@@ -1,0 +1,28 @@
+name: all_bayan_quran
+version: 0.1.0
+summary: all_bayan_quran
+description: Super Cool App that does everything!
+
+confinement: strict
+base: core22
+grade: stable
+
+slots:
+  dbus-all_bayan_quran: # adjust accordingly to your app name
+    interface: dbus
+    bus: session
+    name: org.bar.all_bayan_quran # adjust accordingly to your app name and
+    
+apps:
+  all_bayan_quran:
+    command: all_bayan_quran
+    extensions: [gnome] # gnome includes the libraries required by flutter
+    plugs:
+    - network
+    slots:
+      - dbus-all_bayan_quran
+parts:
+  all_bayan_quran:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart # The main entry-point file of the application
