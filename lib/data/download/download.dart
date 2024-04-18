@@ -258,7 +258,9 @@ class _DownloadDataState extends State<DownloadData> {
           });
 
           final tafseerBox = await Hive.openBox("tafseer");
-          final url = Uri.parse(tafseerLinks[preferance['tafseer_book_ID']]!);
+          final url = Uri.https(
+              tafseerLinks[preferance['tafseer_book_ID']]!.substring(8, 38),
+              tafseerLinks[preferance['tafseer_book_ID']]!.substring(39));
           final headers = {"Accept": "application/json"};
           final response = await http.get(url, headers: headers);
           setState(() {
