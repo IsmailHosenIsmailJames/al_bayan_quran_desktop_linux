@@ -1,8 +1,9 @@
-import 'package:al_bayan_quran/auth/account_info/account_info.dart';
-import 'package:al_bayan_quran/screens/getx_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+
+import '../auth/account_info/account_info.dart';
+import '../screens/getx_controller.dart';
 
 bool isLoogedIn = false;
 String quranScriptType = "quran_tajweed";

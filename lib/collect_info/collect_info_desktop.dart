@@ -1,10 +1,9 @@
-import 'package:al_bayan_quran/theme/theme_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/adapters.dart';
 
+import '../theme/theme_icon_button.dart';
 import 'init.dart';
-import 'pages/choice_recitations.dart';
 import 'pages/choice_tafseer_book.dart';
 import 'getx/get_controller.dart';
 import 'pages/choice_tranlation_book.dart';
@@ -50,8 +49,7 @@ class _CollectInfoDesktopState extends State<CollectInfoDesktop> {
     return Scaffold(
       floatingActionButton: Obx(
         () => FloatingActionButton.extended(
-          onPressed: (infoController.recitationIndex.value != -1 &&
-                  infoController.tafseerBookIndex.value != -1 &&
+          onPressed: (infoController.tafseerBookIndex.value != -1 &&
                   infoController.tafseerIndex.value != -1 &&
                   infoController.bookNameIndex.value != -1 &&
                   infoController.selectedOptionTranslation.value != -1)
@@ -151,7 +149,6 @@ class _CollectInfoDesktopState extends State<CollectInfoDesktop> {
               }
             },
           ),
-          const Expanded(flex: 4, child: RecitaionChoice()),
         ],
       ),
     );

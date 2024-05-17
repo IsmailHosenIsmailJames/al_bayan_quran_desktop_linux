@@ -86,6 +86,7 @@ List<Widget> buildListOfWidgetForNotes() {
           String decodedTafseer =
               utf8.decode(decoder.decodeBytes(base64Decode(tafseer)));
           Get.to(() => TafseerVoiceLess(
+                fontS: controller.fontSizeTranslation.value,
                 ayahNumber: int.parse(list[index]['ayahNumber'] ?? "0"),
                 surahNumber: int.parse(list[index]['surahNumber'] ?? "0"),
                 tafseer: decodedTafseer,

@@ -1,13 +1,14 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/data/download/links.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
-import 'package:al_bayan_quran/theme/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+
+import '../../screens/home_mobile.dart';
+import '../../theme/theme_controller.dart';
+import 'links.dart';
 
 class DownloadData extends StatefulWidget {
   const DownloadData({super.key});
@@ -258,9 +259,7 @@ class _DownloadDataState extends State<DownloadData> {
           });
 
           final tafseerBox = await Hive.openBox("tafseer");
-          final url = Uri.https(
-              tafseerLinks[preferance['tafseer_book_ID']]!.substring(8, 38),
-              tafseerLinks[preferance['tafseer_book_ID']]!.substring(39));
+          final url = Uri.parse(tafseerLinks[preferance['tafseer_book_ID']]!);
           final headers = {"Accept": "application/json"};
           final response = await http.get(url, headers: headers);
           setState(() {

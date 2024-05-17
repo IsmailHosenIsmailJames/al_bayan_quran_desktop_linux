@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/screens/surah_view.dart/tafseer/tafseer.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,6 +8,7 @@ import 'package:hive/hive.dart';
 import '../../api/some_api_response.dart';
 import '../getx_controller.dart';
 import '../surah_view.dart/surah_with_translation.dart';
+import '../surah_view.dart/tafseer/tafseer.dart';
 
 List<Map<String, String>> getAllFavoriteWithData(String name) {
   final box = Hive.box("info");
@@ -76,6 +76,7 @@ List<Widget> buildWidgetForFavBook(String name) {
           String decodedTafseer =
               utf8.decode(decoder.decodeBytes(base64Decode(tafseer)));
           Get.to(() => TafseerVoiceLess(
+                fontS: controller.fontSizeTranslation.value,
                 ayahNumber: int.parse(list[index]['ayahNumber'] ?? "0"),
                 surahNumber: int.parse(list[index]['surahNumber'] ?? "0"),
                 tafseer: decodedTafseer,

@@ -1,9 +1,5 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/screens/drawer/drawer.dart';
-import 'package:al_bayan_quran/screens/favorite_bookmark_notes/get_data.dart';
-import 'package:al_bayan_quran/screens/favorite_bookmark_notes/notes_get_data.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +9,10 @@ import 'package:sidebarx/sidebarx.dart';
 import '../../auth/account_info/account_info.dart';
 import '../../auth/login/login.dart';
 import '../../theme/theme_controller.dart';
+import '../drawer/drawer.dart';
+import '../favorite_bookmark_notes/get_data.dart';
+import '../favorite_bookmark_notes/notes_get_data.dart';
+import '../home_mobile.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});

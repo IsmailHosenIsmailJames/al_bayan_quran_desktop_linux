@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'package:al_bayan_quran/core/show_twoested_message.dart';
-import 'package:al_bayan_quran/screens/getx_controller.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 import '../../api/some_api_response.dart';
+import '../../core/show_twoested_message.dart';
+import '../../screens/getx_controller.dart';
+import '../../screens/home_mobile.dart';
 import '../getx/get_controller.dart';
 
 class ChoiceTranslationBook extends StatefulWidget {

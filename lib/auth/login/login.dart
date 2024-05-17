@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/screens/home_mobile.dart';
-import 'package:al_bayan_quran/theme/theme_controller.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
+import '../../screens/home_mobile.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/theme_icon_button.dart';
 import '../account_info/account_info.dart';
 import '../signin/signin.dart';

@@ -1,6 +1,7 @@
-import 'package:al_bayan_quran/collect_info/collect_info_desktop.dart';
-import 'package:al_bayan_quran/collect_info/collect_info_mobile.dart';
 import 'package:flutter/widgets.dart';
+
+import 'collect_info_desktop.dart';
+import 'collect_info_mobile.dart';
 
 class CollectInfoResponsive extends StatelessWidget {
   final int pageNumber;

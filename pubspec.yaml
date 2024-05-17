@@ -1,4 +1,4 @@
-name: al_bayan_quran
+name: al_quran_translation_and_tafsir
 description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -36,7 +36,6 @@ dependencies:
   fluttertoast: ^8.2.4
   regexpattern: ^2.6.0
   sidebarx: ^0.17.1
-  audioplayers: ^6.0.0
 
   # google_fonts: ^6.1.0
 

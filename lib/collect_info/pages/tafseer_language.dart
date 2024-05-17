@@ -1,10 +1,10 @@
-import 'package:al_bayan_quran/collect_info/pages/choice_tafseer_book.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../api/some_api_response.dart';
 import '../getx/get_controller.dart';
+import 'choice_tafseer_book.dart';
 
 class TafseerLanguage extends StatefulWidget {
   final bool? showAppBarNextButton;

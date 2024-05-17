@@ -1,13 +1,7 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/api/some_api_response.dart';
-import 'package:al_bayan_quran/core/show_twoested_message.dart';
-import 'package:al_bayan_quran/screens/getx_controller.dart';
-import 'package:al_bayan_quran/screens/surah_view.dart/tafseer/tafseer.dart';
 import 'package:archive/archive.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:clipboard/clipboard.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -15,9 +9,13 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
 import '../../api/colors_tazweed.dart';
+import '../../api/some_api_response.dart';
+import '../../core/show_twoested_message.dart';
 import '../../theme/theme_controller.dart';
+import '../getx_controller.dart';
 import '../settings/settings.dart';
 import 'notes/notes.dart';
+import 'tafseer/tafseer.dart';
 
 class SuraView extends StatefulWidget {
   final int surahNumber;
@@ -38,7 +36,6 @@ class SuraView extends StatefulWidget {
 }
 
 class _SuraViewState extends State<SuraView> {
-  AudioPlayer player = AudioPlayer();
   late int totalAyahInSuarh;
   late String? surahNameSimple;
   late String? surahNameArabic;
@@ -73,94 +70,8 @@ class _SuraViewState extends State<SuraView> {
       favoriteSurahKey = favo;
     }
 
-    // player.currentIndexStream.listen((event) {
-    //   if (player.playing && event != null) {
-    //     setState(() {
-    //       playingIndex = event;
-    //     });
-    //     if (listOfkey[playingIndex].currentContext != null &&
-    //         player.playing &&
-    //         playingIndex > -1) {
-    //       Scrollable.ensureVisible(
-    //         listOfkey[playingIndex].currentContext!,
-    //         duration: const Duration(milliseconds: 500),
-    //         alignment: 0.5,
-    //         curve: Curves.ease,
-    //       );
-    //     }
-    //   }
-    //   if (event != null) {
-    //     setState(() {
-    //       playingIndex = event;
-    //     });
-    //   }
-    // });
-
-    // player.playerStateStream.listen((event) {
-    //   if (event.processingState == ProcessingState.completed &&
-    //       playingIndex >= end - 1) {
-    //     setState(() {
-    //       showFloatingControllers = false;
-    //       isLoading = false;
-    //       isPlaying = false;
-    //     });
-    //   } else if (event.processingState == ProcessingState.completed) {
-    //     setState(() {
-    //       isPlaying = false;
-    //       showFloatingControllers = false;
-    //       playingIndex = -1;
-    //     });
-    //   } else if (event.processingState == ProcessingState.loading) {
-    //     setState(() {
-    //       isLoading = true;
-    //       showFloatingControllers = true;
-    //     });
-    //   } else if (event.playing) {
-    //     setState(() {
-    //       isPlaying = true;
-    //       isLoading = false;
-    //       showFloatingControllers = true;
-    //     });
-    //   } else if (event.playing == false) {
-    //     setState(() {
-    //       isPlaying = false;
-    //       isLoading = false;
-    //     });
-    //   }
-    // });
-
-    player.onPlayerComplete.listen((event) async {
-      if (currentPlayingAyah < maxAyahToPlay) {
-        setState(() {
-          currentPlayingAyah++;
-          playingIndex = currentPlayingAyah;
-          isPlaying = true;
-        });
-        player.play(audioResourceSource[currentPlayingAyah]);
-        if (listOfkey[currentPlayingAyah].currentContext != null) {
-          await Scrollable.ensureVisible(
-            listOfkey[currentPlayingAyah].currentContext!,
-            alignment: 0.5,
-            duration: const Duration(milliseconds: 600),
-          );
-        }
-      } else {
-        setState(() {
-          playingIndex = -1;
-          isPlaying = false;
-          showFloatingControllers = false;
-        });
-      }
-    });
-
     if (widget.scrollToAyah != null) scrollToAyahInit(widget.scrollToAyah!);
     super.initState();
-  }
-
-  @override
-  void dispose() async {
-    await player.dispose();
-    super.dispose();
   }
 
   void scrollToAyahInit(int ayah) async {
@@ -184,109 +95,8 @@ class _SuraViewState extends State<SuraView> {
   bool showFloatingControllers = false;
   bool expandFloatingControllers = true;
   bool playFromStart = true;
-  List<Source> audioResourceSource = [];
   int currentPlayingAyah = 0;
   int maxAyahToPlay = 0;
-
-  void playAudioList(
-    List<String> listOfAudioURL,
-    int index,
-  ) async {
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (!(connectivityResult.contains(ConnectivityResult.ethernet) ||
-        connectivityResult.contains(ConnectivityResult.wifi) ||
-        connectivityResult.contains(ConnectivityResult.mobile))) {
-      showDialog(
-        // ignore: use_build_context_synchronously
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Need Internet Connection"),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("OK"))
-          ],
-        ),
-      );
-    } else {
-      try {
-        setState(() {
-          playFromStart = false;
-          audioResourceSource = [];
-          currentPlayingAyah = index;
-          isPlaying = true;
-          maxAyahToPlay = listOfAudioURL.length - 1;
-        });
-        for (int i = 0; i < listOfAudioURL.length; i++) {
-          audioResourceSource.add(UrlSource(listOfAudioURL[i]));
-        }
-        await player.play(audioResourceSource[currentPlayingAyah]);
-      } catch (e) {
-        setState(() {
-          isLoading = false;
-          isPlaying = false;
-          showFloatingControllers = false;
-          playingIndex = -1;
-        });
-        showDialog(
-          // ignore: use_build_context_synchronously
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Need Internet Connection"),
-            content: const Text(
-                "Note: When you play any ayah for the first time it will get downloaded from internet. Then it will stored as cached data in your local memory. You need internet connection now for play this audio."),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK"))
-            ],
-          ),
-        );
-      }
-    }
-  }
-
-  List<String> getAllAudioUrl() {
-    int start = widget.start ?? 0;
-    int end = widget.end ?? allChaptersInfo[widget.surahNumber]['verses_count'];
-    List<String> listOfURL = [];
-    for (int i = start; i < end; i++) {
-      listOfURL.add(getFullURL(i + 1));
-    }
-    return listOfURL;
-  }
-
-  String getBaseURLOfAudio(String recitor) {
-    List<String> splited = recitor.split("(");
-    String urlID = splited[1].replaceAll(")", "");
-    String audioBaseURL = "https://everyayah.com/data/$urlID";
-    return audioBaseURL;
-  }
-
-  String getIdOfAudio(int ayahNumber) {
-    String suraString = "";
-    if (widget.surahNumber < 10) {
-      suraString = "00${widget.surahNumber + 1}";
-    } else if (widget.surahNumber + 1 < 100) {
-      suraString = "0${widget.surahNumber + 1}";
-    } else {
-      suraString = (widget.surahNumber + 1).toString();
-    }
-    String ayahString = "";
-
-    if (ayahNumber < 10) {
-      ayahString = "00$ayahNumber";
-    } else if (ayahNumber < 100) {
-      ayahString = "0$ayahNumber";
-    } else {
-      ayahString = ayahNumber.toString();
-    }
-    return suraString + ayahString;
-  }
 
   int getAyahCountFromStart(int ayahNumber) {
     for (int i = 0; i < widget.surahNumber; i++) {
@@ -294,15 +104,6 @@ class _SuraViewState extends State<SuraView> {
       ayahNumber += verseCount;
     }
     return ayahNumber;
-  }
-
-  String getFullURL(int ayahNumber) {
-    final infoBox = Hive.box("info");
-    final info = infoBox.get("info");
-    String recitorChoice = info['recitation_ID'];
-    String baseURL = getBaseURLOfAudio(recitorChoice);
-    String audioID = getIdOfAudio(ayahNumber);
-    return "$baseURL/$audioID.mp3";
   }
 
   void showInfomationOfSurah() async {
@@ -335,72 +136,79 @@ class _SuraViewState extends State<SuraView> {
           minChildSize: 0.25,
           maxChildSize: 1,
           builder: (context, scrollController) {
-            return ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                Row(
-                  children: [
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.close),
+            return Obx(
+              () => ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  Row(
+                    children: [
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    "Source",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                const Text(
-                  "Source",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                Text(
-                  source,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    source,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const Divider(
-                  thickness: 3,
-                ),
-                const Text(
-                  "Summary",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
+                  const Divider(
+                    thickness: 3,
                   ),
-                ),
-                const SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  shortText,
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const Divider(
-                  thickness: 3,
-                ),
-                const Text(
-                  "In Detail",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
+                  const Text(
+                    "Summary",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(
-                  height: 5,
-                ),
-                HtmlWidget(text),
-                const SizedBox(
-                  height: 50,
-                ),
-              ],
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    shortText,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const Divider(
+                    thickness: 3,
+                  ),
+                  Text(
+                    "In Detail",
+                    style: TextStyle(
+                      fontSize: controller.fontSizeTranslation.value,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  HtmlWidget(
+                    text,
+                    textStyle: TextStyle(
+                      fontSize: controller.fontSizeTranslation.value,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 50,
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -424,6 +232,7 @@ class _SuraViewState extends State<SuraView> {
 
     if (goRoute) {
       Get.to(() => TafseerVoiceLess(
+            fontS: controller.fontSizeTranslation.value,
             surahName: surahName,
             ayahNumber: ayahNumber,
             surahNumber: widget.surahNumber,
@@ -436,114 +245,6 @@ class _SuraViewState extends State<SuraView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: showFloatingControllers
-          ? FloatingActionButton.extended(
-              onPressed: null,
-              label: expandFloatingControllers
-                  ? Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            if (currentPlayingAyah > 0) {
-                              setState(() {
-                                currentPlayingAyah--;
-                                playingIndex = currentPlayingAyah;
-                              });
-                              player.play(
-                                  audioResourceSource[currentPlayingAyah]);
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.skip_previous,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        IconButton(
-                          color: Colors.white,
-                          onPressed: () {
-                            if (player.state == PlayerState.playing) {
-                              player.pause();
-                              setState(() {
-                                isPlaying = false;
-                              });
-                            } else {
-                              player.resume();
-                              setState(() {
-                                isPlaying = true;
-                              });
-                            }
-                          },
-                          style: const ButtonStyle(
-                            backgroundColor: MaterialStatePropertyAll(
-                              Colors.green,
-                            ),
-                          ),
-                          icon: isPlaying
-                              ? const Icon(Icons.pause_rounded)
-                              : const Icon(Icons.play_arrow_rounded),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            if (currentPlayingAyah < maxAyahToPlay) {
-                              setState(() {
-                                currentPlayingAyah++;
-                                isPlaying = true;
-                                playingIndex = currentPlayingAyah;
-                              });
-                              player.play(
-                                  audioResourceSource[currentPlayingAyah]);
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.skip_next,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        IconButton(
-                          onPressed: () async {
-                            if (!(player.state == PlayerState.playing)) {
-                              setState(() {
-                                showFloatingControllers = false;
-                              });
-                              List<String> listOfAudioURL = getAllAudioUrl();
-                              playAudioList(listOfAudioURL, 0);
-                            } else {
-                              setState(() {
-                                expandFloatingControllers = false;
-                              });
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.close,
-                          ),
-                        ),
-                      ],
-                    )
-                  : IconButton(
-                      onPressed: () {
-                        setState(() {
-                          expandFloatingControllers = true;
-                        });
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                      ),
-                    ),
-              extendedPadding: const EdgeInsets.all(5),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(100),
-                ),
-              ),
-            )
-          : null,
       body: Column(
         children: [
           Row(
@@ -555,7 +256,6 @@ class _SuraViewState extends State<SuraView> {
                     playFromStart = true;
                     isPlaying = false;
                   });
-                  await player.pause();
                   // ignore: use_build_context_synchronously
                   Navigator.pop(context);
                 },
@@ -687,7 +387,7 @@ class _SuraViewState extends State<SuraView> {
                         IconButton(
                           onPressed: showInfomationOfSurah,
                           style: const ButtonStyle(
-                            backgroundColor: MaterialStatePropertyAll(
+                            backgroundColor: WidgetStatePropertyAll(
                               Colors.green,
                             ),
                           ),
@@ -699,51 +399,6 @@ class _SuraViewState extends State<SuraView> {
                         ),
                         const SizedBox(
                           width: 10,
-                        ),
-                        IconButton(
-                          iconSize: 30,
-                          style: const ButtonStyle(
-                            backgroundColor: MaterialStatePropertyAll(
-                              Colors.green,
-                            ),
-                          ),
-                          color: Colors.white,
-                          onPressed: () {
-                            if (player.state == PlayerState.completed) {
-                              setState(() {
-                                showFloatingControllers = true;
-                                playingIndex = 0;
-                                isPlaying = true;
-                              });
-                              List<String> listOfAudioURL = getAllAudioUrl();
-                              playAudioList(listOfAudioURL, 0);
-                            }
-
-                            if (!(player.state == PlayerState.playing) &&
-                                    playingIndex == -1 ||
-                                playFromStart) {
-                              setState(() {
-                                showFloatingControllers = true;
-                                playingIndex = 0;
-                                isPlaying = true;
-                              });
-                              List<String> listOfAudioURL = getAllAudioUrl();
-                              playAudioList(listOfAudioURL, 0);
-                            } else if (!(player.state == PlayerState.playing)) {
-                              setState(() {
-                                isPlaying = true;
-                              });
-                              player.resume();
-                            } else {
-                              setState(() {
-                                isPlaying = false;
-                              });
-                              player.pause();
-                            }
-                          },
-                          icon: isPlaying
-                              ? const Icon(Icons.pause_rounded)
-                              : const Icon(Icons.play_arrow_rounded),
                         ),
                       ],
                     ),
@@ -834,10 +489,7 @@ class _SuraViewState extends State<SuraView> {
                                   surahName: widget.surahName,
                                 ));
                           }
-                          if (value == "continuePlay") {
-                            setState(() {});
-                            playAudioList(getAllAudioUrl(), index - 1);
-                          }
+
                           if (value == "bookmark") {
                             infoBox.put("bookmarkUploaded", false);
                             if (!(bookmarkSurahKey.contains(ayahKey))) {
@@ -895,21 +547,6 @@ class _SuraViewState extends State<SuraView> {
                                     width: 10,
                                   ),
                                   Text('See Tafsir'),
-                                ],
-                              ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'continuePlay',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.audiotrack_outlined,
-                                    color: Colors.green,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text("Contionue Play"),
                                 ],
                               ),
                             ),
@@ -1008,46 +645,6 @@ class _SuraViewState extends State<SuraView> {
                       const SizedBox(
                         width: 15,
                       ),
-                      IconButton(
-                        iconSize: 30,
-                        color: Colors.green,
-                        style: const ButtonStyle(
-                          backgroundColor: MaterialStatePropertyAll(
-                            Color.fromARGB(60, 150, 150, 150),
-                          ),
-                        ),
-                        onPressed: () {
-                          if (playFromStart) {
-                            setState(() {
-                              showFloatingControllers = true;
-                              isPlaying = true;
-                              playingIndex = index - 1;
-                            });
-                            playAudioList(getAllAudioUrl(), index - 1);
-                          } else if (playingIndex + 1 == index &&
-                              player.state == PlayerState.playing) {
-                            setState(() {
-                              isPlaying = false;
-                            });
-                            player.pause();
-                          } else if (playingIndex + 1 == index) {
-                            setState(() {
-                              isPlaying = true;
-                            });
-                            player.resume();
-                          } else {
-                            setState(() {
-                              showFloatingControllers = true;
-                              isPlaying = true;
-                              playingIndex = index - 1;
-                            });
-                            playAudioList(getAllAudioUrl(), index - 1);
-                          }
-                        },
-                        icon: index == playingIndex + 1 && isPlaying
-                            ? const Icon(Icons.pause_rounded)
-                            : const Icon(Icons.play_arrow_rounded),
-                      ),
                     ],
                   ),
                   const SizedBox(
@@ -1134,11 +731,6 @@ class _SuraViewState extends State<SuraView> {
         );
       } else {
         if (className == "end") {
-          spanText.add(
-            TextSpan(
-              text: "۝$word",
-            ),
-          );
         } else {
           Color textColor = colorsForTazweed[className] ??
               const Color.fromARGB(255, 121, 85, 72);

@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:al_bayan_quran/auth/login/login.dart';
-import 'package:al_bayan_quran/theme/theme_controller.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+
+import '../../../auth/login/login.dart';
+import '../../../theme/theme_controller.dart';
 
 class Notes extends StatefulWidget {
   final int surahNumber;

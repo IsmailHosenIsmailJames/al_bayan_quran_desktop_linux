@@ -1,9 +1,9 @@
-import 'package:al_bayan_quran/collect_info/collect_info_layout_responsive.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 
 import '../data/download/download.dart';
+import '../screens/home_mobile.dart';
+import 'collect_info_layout_responsive.dart';
 
 class InIt extends StatefulWidget {
   const InIt({super.key});

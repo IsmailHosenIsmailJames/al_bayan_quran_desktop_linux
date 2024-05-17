@@ -1,9 +1,3 @@
-import 'package:al_bayan_quran/collect_info/pages/choice_recitations.dart';
-import 'package:al_bayan_quran/collect_info/pages/tafseer_language.dart';
-import 'package:al_bayan_quran/collect_info/pages/translation_language.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
-import 'package:al_bayan_quran/theme/theme_controller.dart';
-import 'package:al_bayan_quran/theme/theme_icon_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -12,6 +6,10 @@ import 'package:hive/hive.dart';
 
 import '../../api/colors_tazweed.dart';
 import '../../api/some_api_response.dart';
+import '../../collect_info/pages/tafseer_language.dart';
+import '../../collect_info/pages/translation_language.dart';
+import '../../theme/theme_controller.dart';
+import '../../theme/theme_icon_button.dart';
 import '../getx_controller.dart';
 
 class Settings extends StatefulWidget {
@@ -31,8 +29,6 @@ class _SettingsState extends State<Settings> {
 
   late String ayahTranslation =
       translation.get("${info["translation_book_ID"]}/1");
-
-  late String recitor = infoBox.get("info")['recitation_ID'];
 
   late Widget review = Obx(
     () => Text(
@@ -293,72 +289,6 @@ class _SettingsState extends State<Settings> {
           height: 10,
         ),
         const Divider(),
-        const SizedBox(
-          height: 10,
-        ),
-        const Row(
-          children: [
-            Icon(
-              Icons.speaker,
-              color: Colors.green,
-            ),
-            SizedBox(
-              width: 5,
-            ),
-            Text(
-              "Quran Reciter",
-              style: TextStyle(
-                fontSize: 22,
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(
-          height: 5,
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(20, 120, 120, 120),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.all(5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                recitor.split("(")[0],
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await showCupertinoModalPopup(
-                    context: context,
-                    builder: (context) {
-                      return RecitaionChoice(
-                        previousInfo:
-                            Map<String, String>.from(infoBox.get("info")),
-                      );
-                    },
-                  );
-                  Get.offAll(() => const HomeMobile());
-                },
-                child: const Text(
-                  "Change",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SizedBox(
           height: 10,
         ),

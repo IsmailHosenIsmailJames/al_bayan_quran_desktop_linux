@@ -1,28 +1,28 @@
-name: all_bayan_quran
+name: al-quran-translation-and-tafsir
 version: 0.1.0
-summary: all_bayan_quran
-description: Super Cool App that does everything!
+summary: Al Quran Translation in 69 language and Tafsir in 6 language.
+description: Al Quran Translation in 69 language with 230+ books and Tafsir in 6 language with 30+ books of tafsir..
 
 confinement: strict
 base: core22
 grade: stable
 
 slots:
-  dbus-all_bayan_quran: # adjust accordingly to your app name
+  dbus-al-quran-translation-and-tafsir: # adjust accordingly to your app name
     interface: dbus
     bus: session
-    name: org.bar.all_bayan_quran # adjust accordingly to your app name and
+    name: org.bar.super_cool_app # adjust accordingly to your app name and
     
 apps:
-  all_bayan_quran:
-    command: all_bayan_quran
+  al-quran-translation-and-tafsir:
+    command: super_cool_app
     extensions: [gnome] # gnome includes the libraries required by flutter
     plugs:
     - network
     slots:
-      - dbus-all_bayan_quran
+      - dbus-al-quran-translation-and-tafsir
 parts:
-  all_bayan_quran:
+  al-quran-translation-and-tafsir:
     source: .
     plugin: flutter
     flutter-target: lib/main.dart # The main entry-point file of the application

@@ -1,6 +1,3 @@
-import 'package:al_bayan_quran/auth/account_info/account_info.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
-import 'package:al_bayan_quran/theme/theme_icon_button.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
 import 'package:email_validator/email_validator.dart';
@@ -8,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/adapters.dart';
 
+import '../../screens/home_mobile.dart';
 import '../../theme/theme_controller.dart';
+import '../../theme/theme_icon_button.dart';
+import '../account_info/account_info.dart';
 import '../login/login.dart';
 
 class SignIn extends StatefulWidget {

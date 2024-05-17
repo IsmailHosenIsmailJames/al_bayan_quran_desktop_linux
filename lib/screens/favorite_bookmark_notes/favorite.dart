@@ -1,7 +1,7 @@
-import 'package:al_bayan_quran/screens/home_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:sidebarx/sidebarx.dart';
 
+import '../home_mobile.dart';
 import 'get_data.dart';
 
 class Favorite extends StatefulWidget {

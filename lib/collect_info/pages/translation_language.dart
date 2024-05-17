@@ -1,10 +1,10 @@
-import 'package:al_bayan_quran/collect_info/pages/choice_tranlation_book.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../api/some_api_response.dart';
 import '../getx/get_controller.dart';
+import 'choice_tranlation_book.dart';
 
 class TranslationLanguage extends StatefulWidget {
   final bool? showNextButtonOnAppBar;

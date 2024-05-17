@@ -1,17 +1,17 @@
-import 'package:al_bayan_quran/auth/account_info/account_info.dart';
-import 'package:al_bayan_quran/auth/login/login.dart';
-import 'package:al_bayan_quran/screens/drawer/settings_with_appbar.dart';
-import 'package:al_bayan_quran/screens/favorite_bookmark_notes/book_mark.dart';
-import 'package:al_bayan_quran/screens/favorite_bookmark_notes/notes_v.dart';
-import 'package:al_bayan_quran/screens/home_mobile.dart';
-import 'package:al_bayan_quran/theme/theme_controller.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
+import '../../auth/account_info/account_info.dart';
+import '../../auth/login/login.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/theme_icon_button.dart';
+import '../favorite_bookmark_notes/book_mark.dart';
 import '../favorite_bookmark_notes/favorite.dart';
+import '../favorite_bookmark_notes/notes_v.dart';
+import '../home_mobile.dart';
+import 'settings_with_appbar.dart';
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});

@@ -1,12 +1,11 @@
-import 'package:al_bayan_quran/core/show_twoested_message.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../core/show_twoested_message.dart';
 import '../theme/theme_icon_button.dart';
 import 'init.dart';
-import 'pages/choice_recitations.dart';
 import 'pages/choice_tafseer_book.dart';
 import 'getx/get_controller.dart';
 import 'pages/choice_tranlation_book.dart';
@@ -88,7 +87,6 @@ class _CollectInfoMobileState extends State<CollectInfoMobile> {
               ChoiceTranslationBook(),
               TafseerLanguage(),
               ChoiceTafseerBook(),
-              RecitaionChoice(),
             ],
           ),
           Container(
@@ -169,8 +167,7 @@ class _CollectInfoMobileState extends State<CollectInfoMobile> {
                         return;
                       }
                     } else if (pageController.page! == 4) {
-                      if (infoController.recitationIndex.value != -1 &&
-                          infoController.tafseerBookIndex.value != -1 &&
+                      if (infoController.tafseerBookIndex.value != -1 &&
                           infoController.tafseerIndex.value != -1 &&
                           infoController.bookNameIndex.value != -1 &&
                           infoController.selectedOptionTranslation.value !=
